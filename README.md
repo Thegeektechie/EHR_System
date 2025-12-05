@@ -1,6 +1,6 @@
 ## Getting Started
 
-These instructions will help you set up and run the Multimodal EHR System on your local machine.
+These instructions will help you set up and run the EHR System on your local machine.
 
 ### Prerequisites
 
