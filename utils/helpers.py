@@ -1,18 +1,4 @@
 # utils/helpers.py
-"""
-helpers.py
-
-Utility functions for user persistence, directory management, EHR storage
-and simple per user blockchain persistence.
-
-Data storage:
-- Users persisted in data/users.json
-- Biometric files under data/biometric/<user_id>/
-- EHR files under data/ehr_files/<user_id>/
-- Per user blockchain under data/blockchain/<user_id>.json
-- LBPH model stored in data/biometric/lbph_model.yml
-"""
-
 import json
 from pathlib import Path
 from datetime import datetime
@@ -20,7 +6,7 @@ import shutil
 import random
 import string
 
-# attempt import for pdf text extraction
+# import for pdf text extraction
 try:
     import PyPDF2
 except Exception:
@@ -133,7 +119,7 @@ def _validate_txt_ehr(path: Path) -> bool:
 
 def _validate_pdf_ehr(path: Path) -> bool:
     if PyPDF2 is None:  # library not present
-        # reject PDF unless PyPDF2 installed. This avoids silent false positives.
+        # reject PDF. This avoids silent false positives.
         return False
     try:
         reader = PyPDF2.PdfReader(str(path))

@@ -1,11 +1,4 @@
 # gui/dashboard.py
-
-"""
-Modern Dashboard for Admin and Users with validated EHR uploads and blockchain logging.
-Admin can view, upload, validate, edit, download user EHR files, and export all users combined.
-Users can view their blockchain logs and download their own EHR.
-"""
-
 import json
 import tempfile
 import shutil

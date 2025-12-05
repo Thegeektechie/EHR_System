@@ -1,19 +1,3 @@
-"""
-facial.py
-
-Face capture, dataset management, LBPH trainer, and prediction functions using OpenCV.
-
-Usage summary:
-- capture_face_sample: open camera, detect face and return cropped face image
-- capture_and_save_face_samples: capture multiple samples and save to user's faces folder
-- train_lbph_recognizer: train LBPH model from saved faces and update label map
-- predict_face: load model and predict user id from live capture
-
-Notes:
-- LBPH expects grayscale face images of uniform size.
-- The label map maps integer labels to user_id strings and is saved to disk.
-"""
-
 import cv2
 import numpy as np
 from pathlib import Path

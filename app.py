@@ -1,20 +1,3 @@
-"""
-app.py
-
-Authentication system built on top of the OpenCV LBPH facial recognizer and
-a simple fingerprint placeholder. Includes admin login and user EHR management.
-
-Public methods used by GUI:
-- register_user(name, dob, gender, email, password, biometric_type) -> user_id
-- login_password(username_or_email, password) -> bool
-- login_facial() -> (user_id or None, message)
-- login_fingerprint() -> (user_id or None, message)
-- admin_upload_ehr(target_user_id, file_path)
-- get_user_ehr_files(user_id)
-
-The AuthSystem automatically retrains the LBPH model when new face samples are added.
-"""
-
 import hashlib
 from pathlib import Path
 from biometric import facial

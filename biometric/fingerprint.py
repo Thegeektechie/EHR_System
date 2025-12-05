@@ -1,11 +1,3 @@
-"""
-fingerprint.py
-
-Simple fingerprint capture using the webcam and a naive image difference matcher.
-
-This is for prototype only. Real fingerprint matching requires a proper sensor and a matcher library.
-"""
-
 import cv2
 import numpy as np
 from pathlib import Path

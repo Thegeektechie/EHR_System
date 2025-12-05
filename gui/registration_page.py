@@ -7,7 +7,6 @@ from biometric.facial import capture_and_save_face_samples, train_lbph_recognize
 
 
 class RegistrationPage(ctk.CTkFrame):
-    """Modern Registration page with CustomTkinter and biometric support"""
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
@@ -124,7 +123,6 @@ class RegistrationPage(ctk.CTkFrame):
             return
 
         if self.biometric_choice == "Face":
-            # five guided instructions
             instructions = [
                 "Face the camera",
                 "Turn your head slightly to the left",

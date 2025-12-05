@@ -1,21 +1,4 @@
 # gui/blockchain_viewer.py
-"""
-Blockchain log viewer
-
-- Reads data/blockchain.json (expected as a list of events)
-  Example event:
-    {
-      "timestamp": "2025-12-01T12:34:56Z",
-      "user_id": "12345",
-      "action": "uploaded_ehr",
-      "file": "lab-results.pdf",
-      "meta": { ... }   # optional
-    }
-
-- Displays the logs in a searchable table (ttk.Treeview inside a scrollable CTkFrame)
-- Users see only their events. Admin sees all.
-"""
-
 import json
 from pathlib import Path
 import customtkinter as ctk
