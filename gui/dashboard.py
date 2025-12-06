@@ -1,4 +1,11 @@
 # gui/dashboard.py
+
+"""
+Modern Dashboard for Admin and Users with validated EHR uploads and blockchain logging.
+Admin can view, upload, validate, edit, download user EHR files, and export all users combined.
+Users can view their blockchain logs and download their own EHR and view their profile.
+"""
+
 import json
 import tempfile
 import shutil
@@ -128,6 +135,7 @@ class DashboardPage(ctk.CTkFrame):
 
             files = load_user_ehr(uid)
             last_file_path = files[-1] if files else None
+
             # show filename + View button instead of long path
             last_file_frame = ctk.CTkFrame(row, fg_color="transparent")
             last_file_frame.grid(row=0, column=3, padx=4)
@@ -216,6 +224,9 @@ class DashboardPage(ctk.CTkFrame):
         )
         messagebox.showinfo("Success", f"EHR uploaded for User {str(user_id).zfill(5)}")
         self.refresh_admin_table()
+        # if the currently logged in user has this id, refresh their view
+        if self.user_id == user_id and not self.is_admin:
+            self.render_user_profile()
 
     def admin_download_latest_ehr(self, user_id):
         """Admin downloads the latest EHR file for a user."""
@@ -395,6 +406,9 @@ class DashboardPage(ctk.CTkFrame):
                 messagebox.showinfo("Saved", f"EHR saved for user {str(user_id).zfill(5)}")
                 modal.destroy()
                 self.refresh_admin_table()
+                # If the user currently logged in is the same user, refresh their profile
+                if not self.is_admin and self.user_id == user_id:
+                    self.render_user_profile()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to save EHR: {e}")
 
@@ -480,18 +494,79 @@ class DashboardPage(ctk.CTkFrame):
         """Set user view and render blockchain logs for user"""
         self.user_id = user_id
         self.is_admin = False
+        # welcome by name when available
+        name = self.auth.users.get(user_id, {}).get("name") if self.auth.users else None
+        if name:
+            welcome = f"Welcome, {name}"
+        else:
+            welcome = f"Welcome, User {str(user_id).zfill(5)}"
         self.title_label.configure(text="User Dashboard")
-        self.info_label.configure(text=f"Welcome, User {str(user_id).zfill(5)}")
+        self.info_label.configure(text=welcome)
+        # render profile then logs
+        self.render_user_profile()
         self.refresh_user_log()
 
-    def refresh_user_log(self):
-        """Render blockchain events for logged in user"""
+    def render_user_profile(self):
+        """Render a concise user profile including parsed latest EHR preview"""
+        # clear table frame
         for w in self.table_frame.winfo_children():
             w.destroy()
 
+        profile_frame = ctk.CTkFrame(self.table_frame, fg_color="transparent")
+        profile_frame.pack(fill="x", padx=10, pady=10)
+
+        user = self.auth.users.get(self.user_id, {}) if self.auth.users else {}
+        # Basic fields
+        name = user.get("name", "Unknown")
+        dob = user.get("dob", "Unknown")
+        email = user.get("email", "Unknown")
+
+        row = ctk.CTkFrame(profile_frame, fg_color="#ffffff", corner_radius=8)
+        row.pack(fill="x", pady=4, padx=4)
+        ctk.CTkLabel(row, text="Name:", width=120, anchor="w").grid(row=0, column=0, padx=6, pady=6)
+        ctk.CTkLabel(row, text=name, anchor="w").grid(row=0, column=1, padx=6, pady=6)
+        ctk.CTkLabel(row, text="DOB:", width=120, anchor="w").grid(row=1, column=0, padx=6, pady=6)
+        ctk.CTkLabel(row, text=dob, anchor="w").grid(row=1, column=1, padx=6, pady=6)
+        ctk.CTkLabel(row, text="Email:", width=120, anchor="w").grid(row=2, column=0, padx=6, pady=6)
+        ctk.CTkLabel(row, text=email, anchor="w").grid(row=2, column=1, padx=6, pady=6)
+
+        # Latest EHR preview
+        files = load_user_ehr(self.user_id)
+        if files:
+            latest = Path(files[-1])
+            preview_frame = ctk.CTkFrame(self.table_frame, fg_color="#f3f4f6", corner_radius=8)
+            preview_frame.pack(fill="both", expand=True, padx=10, pady=8)
+            ctk.CTkLabel(preview_frame, text=f"Latest EHR: {latest.name}", font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=8, pady=(8,4))
+            # show parsed JSON if available or extracted text first N chars
+            try:
+                if latest.suffix.lower() == ".json":
+                    with open(latest, "r", encoding="utf-8") as fh:
+                        parsed = json.load(fh)
+                    pretty = json.dumps(parsed, indent=2, ensure_ascii=False)
+                    tb = ctk.CTkTextbox(preview_frame, width=760, height=260)
+                    tb.insert("0.0", pretty)
+                    tb.pack(fill="both", expand=True, padx=8, pady=8)
+                else:
+                    extracted = self._extract_text_from_file(str(latest))
+                    tb = ctk.CTkTextbox(preview_frame, width=760, height=260)
+                    if extracted:
+                        tb.insert("0.0", extracted[:2000])
+                    else:
+                        tb.insert("0.0", "Preview not available for this file type.")
+                    tb.pack(fill="both", expand=True, padx=8, pady=8)
+            except Exception as e:
+                ctk.CTkLabel(preview_frame, text=f"Unable to preview file: {e}").pack(anchor="w", padx=8, pady=8)
+        else:
+            ctk.CTkLabel(self.table_frame, text="No EHR records available").pack(pady=8)
+
+    def refresh_user_log(self):
+        """Render blockchain events for logged in user"""
+        # append logs below profile; we will clear and redraw preserving profile if any
+        # If profile was just drawn, we add a logs section below it
         logs = self.blockchain_logger.get_user_logs(self.user_id)
         if not logs:
-            ctk.CTkLabel(self.table_frame, text="No blockchain logs available").pack(pady=20)
+            # if there is already profile content, just add a label for logs
+            ctk.CTkLabel(self.table_frame, text="No blockchain logs available").pack(pady=6)
             return
 
         header = ctk.CTkFrame(self.table_frame, fg_color="transparent")

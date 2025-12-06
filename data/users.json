@@ -1,10 +1,19 @@
 {
-    "55227": {
-        "name": "Final Test User",
-        "dob": "2008-02-03",
-        "gender": "Female",
-        "email": "Final@gmail.com",
-        "password": "0f12e5aafb43c2b85edb6ac6f56c5c99adb055c4a081b14ae91e13afb2f36e22",
+    "37212": {
+        "name": "Tizkidwalex",
+        "dob": "2014-12-02",
+        "gender": "Male",
+        "email": "Tizkidwalex@gmail.com",
+        "password": "f4221cd2c288767f562f4f7ba7bc729233fd313f98b89b5e7ffb966fa69b0426",
+        "biometric_type": "Face",
+        "created_at": null
+    },
+    "83374": {
+        "name": "Adegoke",
+        "dob": "2012-09-04",
+        "gender": "Male",
+        "email": "Adegoke@gmail.com",
+        "password": "ba054c5ed1ae0f7b27bf53d78c3f4bcb5484f54914105e0e38c124f7dd469edb",
         "biometric_type": "Face",
         "created_at": null
     }
