@@ -228,5 +228,21 @@
         },
         "prev_hash": "48ebaca86543fdebe75b1a326bcc85112546ec6a235d1bb8a0e51c36e732398f",
         "hash": "3c30b8bf39c88caa13a89fefb1b9f6de4bdd4a3876ae55b790f0b5adc238ec79"
+    },
+    {
+        "timestamp": 1765051297,
+        "user_id": "37212",
+        "action": "USER_DELETED",
+        "metadata": {},
+        "prev_hash": "3c30b8bf39c88caa13a89fefb1b9f6de4bdd4a3876ae55b790f0b5adc238ec79",
+        "hash": "e86a89e72eb9314076d37c2b0e5e702aee2a9a916f0aab35c3b48af651dc82f7"
+    },
+    {
+        "timestamp": 1765051302,
+        "user_id": "83374",
+        "action": "USER_DELETED",
+        "metadata": {},
+        "prev_hash": "e86a89e72eb9314076d37c2b0e5e702aee2a9a916f0aab35c3b48af651dc82f7",
+        "hash": "a1d0b4ea65da982d7f444c49e55a6fb236beac9901a27de6232be508e70a3876"
     }
 ]

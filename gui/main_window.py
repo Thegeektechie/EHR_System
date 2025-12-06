@@ -6,42 +6,37 @@ from app import AuthSystem
 
 
 class MainApp(ctk.CTk):
-    """Main application window with modern UI and smooth page routing"""
     def __init__(self, auth_system: AuthSystem):
         super().__init__()
 
-        # Global theme
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
 
-        self.title("Multimodal EHR System")
+        self.title("EHR System")
         self.geometry("1050x650")
         self.minsize(1050, 650)
 
         self.auth = auth_system
         self.current_user_id = ""
+        self.current_user_name = ""
         self.is_admin = False
 
-        # Root background like a modern web page
         self.configure(fg_color="#f3f4f6")
 
-        # Page container with spacing like Tailwind (mx auto, responsive max width)
         self.outer_frame = ctk.CTkFrame(
             self,
             fg_color="#f3f4f6",
         )
         self.outer_frame.pack(fill="both", expand=True)
 
-        # Glass effect inner container (acts like max width container)
         self.container = ctk.CTkFrame(
             self.outer_frame,
-            fg_color=("white"),
+            fg_color="white",
             corner_radius=20,
         )
         self.container.place(relx=0.5, rely=0.5, anchor="center")
         self.container.configure(width=900, height=580)
 
-        # Allow content to expand
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
@@ -55,11 +50,9 @@ class MainApp(ctk.CTk):
         self.show_frame("LoginPage")
 
     def show_frame(self, page_name: str):
-        """Animate transition between frames with smooth fade effect"""
         frame = self.frames[page_name]
         frame.tkraise()
 
-        # Optional subtle animation when switching pages
         try:
             frame.update()
             self._animate_fade_in(frame)
@@ -67,17 +60,15 @@ class MainApp(ctk.CTk):
             pass
 
     def _animate_fade_in(self, widget):
-        """Subtle opacity animation similar to React page transitions"""
         try:
-            for i in range(0, 11):
+            for _ in range(0, 8):
                 widget.update()
-                widget.configure(fg_color=widget.cget("fg_color"))
                 self.update_idletasks()
         except:
             pass
 
     def on_login_success(self, user_id: str):
-        """Handle login logic and redirect to dashboard"""
+        """Called after successful login from LoginPage"""
         self.current_user_id = user_id
         self.is_admin = user_id.lower() == "admin"
 
@@ -85,8 +76,16 @@ class MainApp(ctk.CTk):
 
         if self.is_admin:
             dashboard.enable_admin_mode()
+            dashboard.load_blockchain_logs()
+            self.current_user_name = "Administrator"
         else:
+            user_data = self.auth.get_user_profile(user_id)
+            if user_data:
+                self.current_user_name = user_data.get("name", user_id)
             dashboard.set_user(user_id)
+            dashboard.update_user_view()
+
+        dashboard.set_welcome_message(self.current_user_name)
 
         self.show_frame("DashboardPage")
 
