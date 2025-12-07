@@ -3,6 +3,8 @@ from gui.registration_page import RegistrationPage
 from gui.login_page import LoginPage
 from gui.dashboard import DashboardPage
 from app import AuthSystem
+
+
 class MainApp(ctk.CTk):
     def __init__(self, auth_system: AuthSystem):
         super().__init__()
@@ -41,7 +43,6 @@ class MainApp(ctk.CTk):
         self.container.place(relx=0.5, rely=0.5, anchor="center")
         self.container.configure(width=900, height=580)
 
-        # Make fully responsive
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
@@ -92,8 +93,8 @@ class MainApp(ctk.CTk):
         # Admin Login
         # ------------------------------
         if self.is_admin:
-            dashboard.enable_admin_mode()          # Unlock admin functions
-            dashboard.load_blockchain_logs()       # Load hashed blockchain events
+            dashboard.enable_admin_mode()
+            dashboard.load_blockchain_logs()
             self.current_user_name = "Administrator"
 
         # ------------------------------
@@ -103,23 +104,18 @@ class MainApp(ctk.CTk):
             user_data = self.auth.get_user_profile(user_id)
 
             if user_data:
-                # Display the real name instead of ID
                 self.current_user_name = user_data.get("name", user_id)
 
-                # Push user data into dashboard
                 dashboard.set_user(user_id)
 
-                # Force reload of freshly edited user details
-                dashboard.update_user_view()
+                # FIXED: correct dashboard update function
+                dashboard.render_user_profile()
 
             else:
-                # Fallback display
                 self.current_user_name = user_id
 
-        # Display welcome message
         dashboard.set_welcome_message(self.current_user_name)
 
-        # Show dashboard
         self.show_frame("DashboardPage")
 
 
