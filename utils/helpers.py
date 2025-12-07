@@ -32,7 +32,6 @@ BLOCKCHAIN_DIR.mkdir(parents=True, exist_ok=True)
 # ------------------- User Management -------------------
 
 def load_users() -> dict:
-    """Load all users from JSON"""
     if USERS_FILE.exists():
         with open(USERS_FILE, "r", encoding="utf-8") as f:
             try:
@@ -43,16 +42,11 @@ def load_users() -> dict:
 
 
 def save_users(users: dict):
-    """Save users dict to disk"""
     with open(USERS_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, indent=4, ensure_ascii=False)
 
 
 def generate_user_id(name: str = "", dob: str = "") -> str:
-    """
-    Generate a unique 5 digit numeric user id.
-    Ensures no collision with existing users.json.
-    """
     users = load_users()
     attempts = 0
     while True:
@@ -61,12 +55,10 @@ def generate_user_id(name: str = "", dob: str = "") -> str:
             return uid
         attempts += 1
         if attempts > 100000:
-            # extremely unlikely, fallback to timestamp-based id
             return str(int(datetime.now().timestamp()))[-5:]
 
 
 def create_user_folder(user_id: str) -> Path:
-    """Create folders for biometric data for this user"""
     path = BIOMETRIC_DIR / user_id
     faces = path / "faces"
     faces.mkdir(parents=True, exist_ok=True)
@@ -78,10 +70,6 @@ def create_user_folder(user_id: str) -> Path:
 _EHR_REQUIRED_FIELDS = {"name", "address", "genotype", "bloodgroup"}
 
 def _text_contains_ehr_keywords(text: str) -> bool:
-    """
-    Heuristic check that text contains EHR keywords.
-    Returns True when at least two required fields are present in the text.
-    """
     t = text.lower()
     found = 0
     for kw in _EHR_REQUIRED_FIELDS:
@@ -139,10 +127,6 @@ def _validate_pdf_ehr(path: Path) -> bool:
 
 
 def validate_ehr_file(file_path: str) -> bool:
-    """
-    Validate if candidate file contains EHR details.
-    Supports JSON, TXT, PDF. Returns True when validation passes.
-    """
     path = Path(file_path)
     if not path.exists() or not path.is_file():
         return False
@@ -159,11 +143,6 @@ def validate_ehr_file(file_path: str) -> bool:
 
 
 def save_ehr_for_user(user_id: str, file_path: str) -> str:
-    """
-    Copy a validated file into the user's EHR folder.
-    Raises ValueError if validation fails.
-    Returns the path to the saved file.
-    """
     if not validate_ehr_file(file_path):
         raise ValueError("EHR validation failed. The uploaded file does not contain required EHR fields.")
 
@@ -175,7 +154,6 @@ def save_ehr_for_user(user_id: str, file_path: str) -> str:
 
 
 def load_user_ehr(user_id: str) -> list:
-    """Return list of file names for a user's EHR folder"""
     user_folder = EHR_DIR / user_id
     if not user_folder.exists():
         return []
@@ -186,35 +164,27 @@ def load_user_ehr(user_id: str) -> list:
 # ------------------- Admin Helper -------------------
 
 def is_admin(username: str, password: str) -> bool:
-    """Simple hard-coded admin check"""
     return username == "Admin" and password == "Admin@123"
 
 
 # ------------------- Biometric Paths -------------------
 
 def get_user_faces_folder(user_id: str) -> Path:
-    """Return path to user's faces folder"""
     return BIOMETRIC_DIR / user_id / "faces"
 
 
 def get_user_fingerprint_path(user_id: str) -> Path:
-    """Return expected fingerprint path for user"""
     return BIOMETRIC_DIR / user_id / "fingerprint.png"
 
 
 # ------------------- Per user blockchain helpers -------------------
 
 def get_user_blockchain_path(user_id: str) -> Path:
-    """Return file path for per user blockchain JSON"""
     f = BLOCKCHAIN_DIR / f"{user_id}.json"
     return f
 
 
 def save_blockchain_for_user(user_id: str, event: dict):
-    """
-    Append an event to the user's blockchain file.
-    This file is a list of blocks. Basic integrity fields included.
-    """
     path = get_user_blockchain_path(user_id)
     chain = []
     if path.exists():

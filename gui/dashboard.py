@@ -32,8 +32,6 @@ _REQUIRED_EHR_FIELDS = [
 
 
 class DashboardPage(ctk.CTkFrame):
-    """Dashboard for Admin and Users with integrated blockchain logging and EHR validation"""
-
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
@@ -90,7 +88,6 @@ class DashboardPage(ctk.CTkFrame):
 
     # --------------------- Admin Methods ---------------------
     def enable_admin_mode(self):
-        """Enable admin UI elements and refresh table"""
         self.is_admin = True
         self.title_label.configure(text="Admin Dashboard")
         self.info_label.configure(text="Manage users and records")
@@ -100,7 +97,7 @@ class DashboardPage(ctk.CTkFrame):
         self.refresh_admin_table()
 
     def refresh_admin_table(self):
-        """Render table of users with actions"""
+
         for w in self.table_frame.winfo_children():
             w.destroy()
 
@@ -129,7 +126,7 @@ class DashboardPage(ctk.CTkFrame):
             files = load_user_ehr(uid)
             last_file_path = files[-1] if files else None
 
-            # Last EHR: show filename and a View button (not entire path)
+
             last_file_frame = ctk.CTkFrame(row, fg_color="transparent")
             last_file_frame.grid(row=0, column=3, padx=4)
             if last_file_path:
@@ -159,7 +156,6 @@ class DashboardPage(ctk.CTkFrame):
                           hover_color="#ff1f1f", command=lambda u=uid: self.delete_user(u)).pack(side="left", padx=3)
 
     def upload_ehr_for_user(self, user_id: str):
-        """Admin uploads EHR file. PDFs get rendered using pdf2image when viewing."""
         file_path = filedialog.askopenfilename(
             title="Select EHR File",
             filetypes=[("EHR Files", "*.json *.txt *.pdf"), ("JSON", "*.json"), ("Text", "*.txt"), ("PDF", "*.pdf")]
@@ -200,7 +196,6 @@ class DashboardPage(ctk.CTkFrame):
             self.render_user_profile()
 
     def admin_download_latest_ehr(self, user_id: str):
-        """Admin downloads the latest EHR file for a user to a chosen location."""
         files = load_user_ehr(user_id)
         if not files:
             messagebox.showwarning("No files", "No EHR files for this user.")
@@ -253,7 +248,6 @@ class DashboardPage(ctk.CTkFrame):
 
     # ---------------------- Edit / Manual EHR Modal ----------------------
     def open_edit_ehr_modal(self, user_id: str):
-        """Manual EHR editor modal for admin to create or edit EHRs."""
         modal = ctk.CTkToplevel(self)
         modal.title(f"Edit EHR - {str(user_id).zfill(5)}")
         modal.geometry("760x540")
@@ -352,7 +346,6 @@ class DashboardPage(ctk.CTkFrame):
 
     # ---------------------- EHR Viewer (human friendly) ----------------------
     def view_ehr_modal(self, user_id: str, file_path: str):
-        """Open modal that previews file in friendly format. PDFs render as images if dependencies available."""
         modal = ctk.CTkToplevel(self)
         modal.title(f"EHR Viewer - {str(user_id).zfill(5)}")
         modal.geometry("900x700")
@@ -612,7 +605,6 @@ class DashboardPage(ctk.CTkFrame):
             ctk.CTkButton(row, text="Show", width=80, command=lambda e=entry: self._show_full_log_entry(e)).grid(row=0, column=3, padx=6)
 
     def _show_full_log_entry(self, entry: Dict[str, Any]):
-        """Show full blockchain entry in modal."""
         modal = ctk.CTkToplevel(self)
         modal.title("Blockchain Log Entry")
         modal.geometry("700x500")
@@ -630,7 +622,6 @@ class DashboardPage(ctk.CTkFrame):
 
     # ---------------------- Utilities ----------------------
     def _validate_ehr_object(self, ehr_obj: Dict[str, Any]) -> bool:
-        """Basic structural EHR validation. Accepts raw_text containers when needed."""
         if not isinstance(ehr_obj, dict):
             return False
         # lower-case keys set for tolerant checks
@@ -644,7 +635,6 @@ class DashboardPage(ctk.CTkFrame):
         return True
 
     def _extract_text_from_file(self, path: str) -> Optional[str]:
-        """Extract text from txt or pdf (PyPDF2) as fallback for validation or plain preview."""
         p = Path(path)
         suffix = p.suffix.lower()
         if suffix in (".txt", ".md", ".csv"):
@@ -677,7 +667,6 @@ class DashboardPage(ctk.CTkFrame):
         return None
 
     def open_blockchain_overview(self):
-        """Admin level overview of full ledger with ability to export or inspect entries."""
         modal = ctk.CTkToplevel(self)
         modal.title("Blockchain Ledger")
         modal.geometry("900x600")
@@ -701,7 +690,6 @@ class DashboardPage(ctk.CTkFrame):
 
         body = ctk.CTkFrame(card, fg_color="transparent")
         body.pack(fill="both", expand=True, padx=6, pady=6)
-        # Scrollable list
         for e in entries:
             row = ctk.CTkFrame(body, fg_color="#f7fafc", corner_radius=6)
             row.pack(fill="x", pady=3)
@@ -723,12 +711,9 @@ class DashboardPage(ctk.CTkFrame):
         ctk.CTkButton(card, text="Close", width=120, command=modal.destroy).pack(side="right", padx=12, pady=8)
 
     def export_all_ehrs(self):
-        """Alias for compatibility - same as download_all_users_ehr"""
         self.download_all_users_ehr()
 
     def download_all_users_ehr(self):
-        """Compatibility method kept for older callers"""
-        # call the same implementation as export_all_ehrs to keep APIs consistent
         users = load_users()
         if not users:
             messagebox.showwarning("No users", "There are no users to export.")

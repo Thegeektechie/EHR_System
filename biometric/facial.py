@@ -5,6 +5,9 @@ from typing import Optional, Tuple, List, Generator
 import json
 from utils.helpers import BIOMETRIC_DIR, LABEL_MAP_FILE
 
+# -----------------------------------------------------------
+# Face Detection Configuration
+# -----------------------------------------------------------
 FACE_CASCADE_PATH = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 FACE_CASCADE = cv2.CascadeClassifier(FACE_CASCADE_PATH)
 
@@ -12,28 +15,31 @@ FACE_SIZE = (200, 200)
 
 
 def _detect_face_gray(gray_img: np.ndarray) -> Optional[Tuple[int, int, int, int]]:
+    """
+    Detect the largest face in a grayscale image.
+    Returns bounding box or None.
+    """
     faces = FACE_CASCADE.detectMultiScale(
         gray_img,
         scaleFactor=1.1,
         minNeighbors=5,
         minSize=(80, 80)
     )
+
     if len(faces) == 0:
         return None
+
     faces = sorted(faces, key=lambda r: r[2] * r[3], reverse=True)
     return faces[0]
 
 
-# -------------------------------------------------------------------
-#  AUTO CAPTURE SYSTEM (used by progress modal in registration)
-# -------------------------------------------------------------------
+# -----------------------------------------------------------
+# Automatic Face Capture (Used by Registration Progress Bar)
+# -----------------------------------------------------------
 def open_camera_and_capture(user_id: str, required_samples: int) -> Generator[int, None, None]:
     """
-    Continuously captures facial samples automatically.
-    Yields 1 after each successful sample.
-    Used by progress bar thread.
+    Generator that automatically captures faces and yields progress events.
     """
-
     user_faces_dir = BIOMETRIC_DIR / user_id / "faces"
     user_faces_dir.mkdir(parents=True, exist_ok=True)
 
@@ -53,18 +59,18 @@ def open_camera_and_capture(user_id: str, required_samples: int) -> Generator[in
 
         if face_rect is not None:
             x, y, w, h = face_rect
-            face = gray[y:y+h, x:x+w]
+            face = gray[y:y + h, x:x + w]
 
             try:
                 face_resized = cv2.resize(face, FACE_SIZE)
-            except:
+            except Exception:
                 continue
 
             filepath = user_faces_dir / f"face_{saved_count + 1}.png"
             cv2.imwrite(str(filepath), face_resized)
 
             saved_count += 1
-            yield 1  # notify progress
+            yield 1
 
         cv2.waitKey(30)
 
@@ -72,34 +78,29 @@ def open_camera_and_capture(user_id: str, required_samples: int) -> Generator[in
     cv2.destroyAllWindows()
 
 
-# -------------------------------------------------------------------
-# COMPATIBILITY WRAPPER FOR OLD REGISTRATION CODE
-# -------------------------------------------------------------------
+# -----------------------------------------------------------
+# Backward Compatibility Function
+# -----------------------------------------------------------
 def capture_and_save_face_samples(user_id: str, samples: int = 5):
     """
-    Backwards compatible wrapper for old registration systems.
-    Uses open_camera_and_capture internally.
-    Returns (saved_count, list_of_paths)
+    Wraps the automatic capture system so older code calling this still works.
     """
-
     saved_paths = []
     saved_count = 0
 
     gen = open_camera_and_capture(user_id, samples)
-
     user_faces_dir = BIOMETRIC_DIR / user_id / "faces"
 
     for _ in gen:
         saved_count += 1
-        path = user_faces_dir / f"face_{saved_count}.png"
-        saved_paths.append(str(path))
+        saved_paths.append(str(user_faces_dir / f"face_{saved_count}.png"))
 
     return saved_count, saved_paths
 
 
-# -------------------------------------------------------------------
-# DATA GATHERING FOR TRAINING
-# -------------------------------------------------------------------
+# -----------------------------------------------------------
+# Training Data Loader
+# -----------------------------------------------------------
 def _gather_training_data() -> Tuple[List[np.ndarray], List[int], dict]:
     faces = []
     labels = []
@@ -131,10 +132,13 @@ def _gather_training_data() -> Tuple[List[np.ndarray], List[int], dict]:
     return faces, labels, label_map
 
 
-# -------------------------------------------------------------------
-# TRAINING
-# -------------------------------------------------------------------
+# -----------------------------------------------------------
+# Model Training
+# -----------------------------------------------------------
 def train_lbph_recognizer(model_path: Path = BIOMETRIC_DIR / "lbph_model.yml"):
+    """
+    Train LBPH model using all stored user images.
+    """
     faces, labels, label_map = _gather_training_data()
 
     if len(faces) == 0:
@@ -152,10 +156,14 @@ def train_lbph_recognizer(model_path: Path = BIOMETRIC_DIR / "lbph_model.yml"):
     return True
 
 
-# -------------------------------------------------------------------
-# FACE PREDICTION
-# -------------------------------------------------------------------
-def predict_face(threshold: float = 60.0) -> Tuple[Optional[str], float]]:
+# -----------------------------------------------------------
+# Face Prediction
+# -----------------------------------------------------------
+def predict_face(threshold: float = 60.0) -> Tuple[Optional[str], float]:
+    """
+    Capture a frame, detect face, and predict user identity.
+    Returns (user_id, confidence).
+    """
     model_path = BIOMETRIC_DIR / "lbph_model.yml"
 
     if not model_path.exists():
@@ -185,7 +193,7 @@ def predict_face(threshold: float = 60.0) -> Tuple[Optional[str], float]]:
         return None, float("inf")
 
     x, y, w, h = face_rect
-    face = gray[y:y+h, x:x+w]
+    face = gray[y:y + h, x:x + w]
     face_resized = cv2.resize(face, FACE_SIZE)
 
     label, confidence = recognizer.predict(face_resized)

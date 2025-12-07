@@ -4,10 +4,6 @@ from pathlib import Path
 
 # Simple capture function that writes the captured frame to a given path
 def capture_fingerprint(save_path: Path) -> bool:
-    """
-    Open webcam, show preview, press 'c' to capture fingerprint image, 'q' to quit.
-    Saves the captured frame to save_path and returns True on success.
-    """
     cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         print("Cannot open camera for fingerprint capture")
@@ -36,10 +32,7 @@ def capture_fingerprint(save_path: Path) -> bool:
 
 
 def compare_fingerprint(stored_path: Path, live_path: Path, threshold: float = 30.0) -> bool:
-    """
-    Compare two fingerprint images by resizing, taking absolute difference and computing mean.
-    Returns True if mean difference is below threshold.
-    """
+
     a = cv2.imread(str(stored_path), cv2.IMREAD_GRAYSCALE)
     b = cv2.imread(str(live_path), cv2.IMREAD_GRAYSCALE)
     if a is None or b is None:

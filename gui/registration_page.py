@@ -193,11 +193,6 @@ class RegistrationPage(ctk.CTkFrame):
         Thread(target=self._capture_and_train_face, daemon=True).start()
 
     def _capture_and_train_face(self):
-        """
-        Capture a fixed number of face samples and update progress.
-        This function tries to use a streaming capture generator if the biometric module
-        exposes it. Otherwise it falls back to single-sample capture helper.
-        """
         total_steps = 5
         saved_samples = 0
 

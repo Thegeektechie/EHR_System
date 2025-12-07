@@ -3,8 +3,6 @@ from gui.registration_page import RegistrationPage
 from gui.login_page import LoginPage
 from gui.dashboard import DashboardPage
 from app import AuthSystem
-
-
 class MainApp(ctk.CTk):
     def __init__(self, auth_system: AuthSystem):
         super().__init__()
@@ -84,10 +82,7 @@ class MainApp(ctk.CTk):
     # Successful Login or Post Registration
     # ---------------------------------------------------------
     def on_login_success(self, user_id: str):
-        """
-        Handles user entry into the dashboard immediately after login
-        or auto entry after registration.
-        """
+
         self.current_user_id = user_id
         self.is_admin = user_id.lower() == "admin"
 
