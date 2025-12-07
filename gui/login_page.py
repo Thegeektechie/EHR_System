@@ -5,7 +5,8 @@ from biometric.facial import predict_face
 
 
 class LoginPage(ctk.CTkFrame):
-    """Modern Tailwind-inspired login screen with User and Admin tabs"""
+    """Modern Tailwind styled login interface with User and Admin authentication"""
+
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
@@ -13,7 +14,9 @@ class LoginPage(ctk.CTkFrame):
 
         self.configure(fg_color="#f3f4f6")
 
+        # ---------------------------------------------------------
         # Title
+        # ---------------------------------------------------------
         title = ctk.CTkLabel(
             self,
             text="Welcome Back",
@@ -24,12 +27,12 @@ class LoginPage(ctk.CTkFrame):
         subtitle = ctk.CTkLabel(
             self,
             text="Sign in to continue",
-            font=ctk.CTkFont(size=15, weight="normal"),
+            font=ctk.CTkFont(size=15),
             text_color="#6b7280"
         )
         subtitle.pack(pady=(0, 20))
 
-        # Main card container
+        # Card container
         self.card = ctk.CTkFrame(
             self,
             fg_color="white",
@@ -43,14 +46,16 @@ class LoginPage(ctk.CTkFrame):
             width=600,
             height=420,
             corner_radius=15,
-            fg_color="#ffffff"
+            fg_color="white"
         )
         self.tabview.pack(pady=10, padx=20, fill="both")
 
         self.tabview.add("User Login")
         self.tabview.add("Admin Login")
 
-        # ------------ USER LOGIN TAB ------------
+        # ---------------------------------------------------------
+        # User Login Tab
+        # ---------------------------------------------------------
         user_tab = self.tabview.tab("User Login")
 
         ctk.CTkLabel(
@@ -74,7 +79,7 @@ class LoginPage(ctk.CTkFrame):
         )
         self.password_entry.pack(pady=10)
 
-        # Login buttons
+        # Login Button Group
         user_btn_frame = ctk.CTkFrame(user_tab, fg_color="transparent")
         user_btn_frame.pack(pady=20)
 
@@ -99,17 +104,19 @@ class LoginPage(ctk.CTkFrame):
             command=self.handle_fingerprint_login
         ).grid(row=2, column=0, pady=5)
 
-        # Account creation
+        # Register Button
         ctk.CTkButton(
             user_tab,
             text="Create Account",
             fg_color="#2563eb",
             hover_color="#1d4ed8",
             width=200,
-            command=lambda: controller.show_frame("RegistrationPage")
+            command=lambda: self.controller.show_frame("RegistrationPage")
         ).pack(pady=15)
 
-        # ------------ ADMIN LOGIN TAB ------------
+        # ---------------------------------------------------------
+        # Admin Login Tab
+        # ---------------------------------------------------------
         admin_tab = self.tabview.tab("Admin Login")
 
         ctk.CTkLabel(
@@ -142,7 +149,9 @@ class LoginPage(ctk.CTkFrame):
             command=self.handle_admin_login
         ).pack(pady=30)
 
-    # ----------------- LOGIN HANDLERS -----------------
+    # ======================================================================
+    # LOGIN HANDLERS
+    # ======================================================================
 
     def handle_user_login(self):
         username = self.username_entry.get().strip()
@@ -152,12 +161,11 @@ class LoginPage(ctk.CTkFrame):
             messagebox.showwarning("Validation", "Please enter credentials")
             return
 
-        success = self.auth.login_password(username, password)
-        if success:
+        if self.auth.login_password(username, password):
             uid = self.auth.active_session
-            display_uid = str(uid).zfill(5) if uid != "Admin" else "Admin"
+            display_uid = str(uid).zfill(5)
             self.controller.on_login_success(uid)
-            messagebox.showinfo("Login Successful", f"Welcome, User ID {display_uid}")
+            messagebox.showinfo("Login Successful", f"Welcome, User {display_uid}")
         else:
             messagebox.showerror("Login Failed", "Invalid credentials")
 
@@ -173,19 +181,21 @@ class LoginPage(ctk.CTkFrame):
 
     def handle_face_login(self):
         user_id, confidence = predict_face()
+
         if user_id:
             self.auth.active_session = user_id
             display_uid = str(user_id).zfill(5)
             self.controller.on_login_success(user_id)
-            messagebox.showinfo("Face Login Successful", f"Welcome, User ID {display_uid}")
+            messagebox.showinfo("Face Login Successful", f"Welcome, User {display_uid}")
         else:
             messagebox.showerror("Face Login Failed", "Face not recognized")
 
     def handle_fingerprint_login(self):
         user_id, msg = self.auth.login_fingerprint()
+
         if user_id:
             display_uid = str(user_id).zfill(5)
             self.controller.on_login_success(user_id)
-            messagebox.showinfo("Fingerprint Login Successful", f"Welcome, User ID {display_uid}")
+            messagebox.showinfo("Fingerprint Login Successful", f"Welcome, User {display_uid}")
         else:
             messagebox.showerror("Fingerprint Login Failed", msg)
