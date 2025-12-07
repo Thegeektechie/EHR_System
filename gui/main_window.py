@@ -9,6 +9,7 @@ class MainApp(ctk.CTk):
     def __init__(self, auth_system: AuthSystem):
         super().__init__()
 
+        # Appearance
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
 
@@ -16,23 +17,22 @@ class MainApp(ctk.CTk):
         self.geometry("1050x650")
         self.minsize(1050, 650)
 
+        # App State
         self.auth = auth_system
         self.current_user_id = ""
         self.current_user_name = ""
         self.is_admin = False
 
+        # Main container background
         self.configure(fg_color="#f3f4f6")
 
-        self.outer_frame = ctk.CTkFrame(
-            self,
-            fg_color="#f3f4f6",
-        )
+        self.outer_frame = ctk.CTkFrame(self, fg_color="#f3f4f6")
         self.outer_frame.pack(fill="both", expand=True)
 
         self.container = ctk.CTkFrame(
             self.outer_frame,
             fg_color="white",
-            corner_radius=20,
+            corner_radius=20
         )
         self.container.place(relx=0.5, rely=0.5, anchor="center")
         self.container.configure(width=900, height=580)
@@ -40,19 +40,20 @@ class MainApp(ctk.CTk):
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
+        # Pages
         self.frames = {}
-
         for F in (RegistrationPage, LoginPage, DashboardPage):
             frame = F(parent=self.container, controller=self)
             self.frames[F.__name__] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
+        # Start at login page
         self.show_frame("LoginPage")
 
+    # Frame switching
     def show_frame(self, page_name: str):
         frame = self.frames[page_name]
         frame.tkraise()
-
         try:
             frame.update()
             self._animate_fade_in(frame)
@@ -67,8 +68,11 @@ class MainApp(ctk.CTk):
         except:
             pass
 
+    # Login or post registration entry
     def on_login_success(self, user_id: str):
-        """Called after successful login from LoginPage"""
+        """
+        Called after successful login or after registration completes.
+        """
         self.current_user_id = user_id
         self.is_admin = user_id.lower() == "admin"
 
@@ -82,8 +86,10 @@ class MainApp(ctk.CTk):
             user_data = self.auth.get_user_profile(user_id)
             if user_data:
                 self.current_user_name = user_data.get("name", user_id)
-            dashboard.set_user(user_id)
-            dashboard.update_user_view()
+                dashboard.set_user(user_id)
+                dashboard.update_user_view()
+            else:
+                self.current_user_name = user_id
 
         dashboard.set_welcome_message(self.current_user_name)
 
