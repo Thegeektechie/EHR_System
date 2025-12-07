@@ -5,9 +5,6 @@ from typing import Optional
 from threading import Thread
 from app import AuthSystem
 from biometric.facial import capture_and_save_face_samples, train_lbph_recognizer
-
-# We will attempt to import an optional continuous capture helper if available.
-# Newer biometric module may expose `open_camera_and_capture(user_id, required_samples)` generator.
 try:
     from biometric import facial as _facial_module  # type: ignore
     _HAS_STREAM_CAPTURE = hasattr(_facial_module, "open_camera_and_capture")
@@ -17,7 +14,6 @@ except Exception:
 
 
 class RegistrationPage(ctk.CTkFrame):
-    """User registration page with facial or fingerprint biometric capture and progress indicator."""
 
     def __init__(self, parent, controller):
         super().__init__(parent)

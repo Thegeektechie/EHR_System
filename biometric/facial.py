@@ -24,10 +24,14 @@ def _detect_face_gray(gray_img: np.ndarray) -> Optional[Tuple[int, int, int, int
     return faces[0]
 
 
+# -------------------------------------------------------------------
+#  AUTO CAPTURE SYSTEM (used by progress modal in registration)
+# -------------------------------------------------------------------
 def open_camera_and_capture(user_id: str, required_samples: int) -> Generator[int, None, None]:
     """
-    Automatically capture facial samples without requiring user input.
-    Yields 1 each time a sample is saved. Used by progress bar thread.
+    Continuously captures facial samples automatically.
+    Yields 1 after each successful sample.
+    Used by progress bar thread.
     """
 
     user_faces_dir = BIOMETRIC_DIR / user_id / "faces"
@@ -56,23 +60,50 @@ def open_camera_and_capture(user_id: str, required_samples: int) -> Generator[in
             except:
                 continue
 
-            filename = user_faces_dir / f"face_{saved_count + 1}.png"
-            cv2.imwrite(str(filename), face_resized)
+            filepath = user_faces_dir / f"face_{saved_count + 1}.png"
+            cv2.imwrite(str(filepath), face_resized)
+
             saved_count += 1
+            yield 1  # notify progress
 
-            yield 1  # notify progress update
-
-        cv2.waitKey(20)
+        cv2.waitKey(30)
 
     cam.release()
     cv2.destroyAllWindows()
 
 
+# -------------------------------------------------------------------
+# COMPATIBILITY WRAPPER FOR OLD REGISTRATION CODE
+# -------------------------------------------------------------------
+def capture_and_save_face_samples(user_id: str, samples: int = 5):
+    """
+    Backwards compatible wrapper for old registration systems.
+    Uses open_camera_and_capture internally.
+    Returns (saved_count, list_of_paths)
+    """
+
+    saved_paths = []
+    saved_count = 0
+
+    gen = open_camera_and_capture(user_id, samples)
+
+    user_faces_dir = BIOMETRIC_DIR / user_id / "faces"
+
+    for _ in gen:
+        saved_count += 1
+        path = user_faces_dir / f"face_{saved_count}.png"
+        saved_paths.append(str(path))
+
+    return saved_count, saved_paths
+
+
+# -------------------------------------------------------------------
+# DATA GATHERING FOR TRAINING
+# -------------------------------------------------------------------
 def _gather_training_data() -> Tuple[List[np.ndarray], List[int], dict]:
     faces = []
     labels = []
     label_map = {}
-    reverse_map = {}
     current_label = 0
 
     for user_folder in sorted(BIOMETRIC_DIR.iterdir()):
@@ -85,7 +116,6 @@ def _gather_training_data() -> Tuple[List[np.ndarray], List[int], dict]:
 
         user_id = user_folder.name
         label_map[current_label] = user_id
-        reverse_map[user_id] = current_label
 
         for img_path in faces_dir.glob("*.png"):
             img = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
@@ -101,6 +131,9 @@ def _gather_training_data() -> Tuple[List[np.ndarray], List[int], dict]:
     return faces, labels, label_map
 
 
+# -------------------------------------------------------------------
+# TRAINING
+# -------------------------------------------------------------------
 def train_lbph_recognizer(model_path: Path = BIOMETRIC_DIR / "lbph_model.yml"):
     faces, labels, label_map = _gather_training_data()
 
@@ -119,8 +152,12 @@ def train_lbph_recognizer(model_path: Path = BIOMETRIC_DIR / "lbph_model.yml"):
     return True
 
 
-def predict_face(threshold: float = 60.0) -> Tuple[Optional[str], float]:
+# -------------------------------------------------------------------
+# FACE PREDICTION
+# -------------------------------------------------------------------
+def predict_face(threshold: float = 60.0) -> Tuple[Optional[str], float]]:
     model_path = BIOMETRIC_DIR / "lbph_model.yml"
+
     if not model_path.exists():
         print("No trained LBPH model found.")
         return None, float("inf")

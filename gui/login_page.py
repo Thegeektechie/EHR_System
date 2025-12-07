@@ -5,8 +5,6 @@ from biometric.facial import predict_face
 
 
 class LoginPage(ctk.CTkFrame):
-    """Modern Tailwind styled login interface with User and Admin authentication"""
-
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
