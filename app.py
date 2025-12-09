@@ -6,7 +6,7 @@ from utils.helpers import (
     get_user_fingerprint_path, save_ehr_for_user, load_user_ehr
 )
 
-# Admin credentials
+# Administrator credentials
 ADMIN_USERNAME = "Admin"
 ADMIN_PASSWORD = "Admin@123"
 
@@ -17,35 +17,37 @@ def is_admin(username, password):
 
 class AuthSystem:
     def __init__(self):
+        # Load all users from storage
         self.users = load_users()
         self.active_session = None
 
     # -----------------------------------------------------------
-    # USER REGISTRATION
+    # REGISTRATION
     # -----------------------------------------------------------
     def register_user(self, name, dob, gender, email, password, biometric_type="face"):
-        # Prevent duplicates
+        # Prevent duplicate email registration
         for uid, info in self.users.items():
             if info.get("email", "").strip().lower() == email.strip().lower():
                 return None
 
-        # Generate new user ID
-        user_id = generate_user_id()
+        # Generate five digit user identifier
+        user_id = str(generate_user_id())
 
         # Create folder for biometric data
         create_user_folder(user_id)
 
-        # Hash password for safe storage
+        # Securely hash password
         hashed_pw = hashlib.sha256(password.encode()).hexdigest()
 
-        # Store user details
+        # Save user information
         self.users[user_id] = {
             "name": name.strip(),
             "dob": dob.strip(),
             "gender": gender,
             "email": email.strip(),
             "password": hashed_pw,
-            "biometric_type": biometric_type
+            "biometric_type": biometric_type,
+            "fingerprint_path": None
         }
 
         # Biometric capture
@@ -65,19 +67,22 @@ class AuthSystem:
     # PASSWORD LOGIN
     # -----------------------------------------------------------
     def login_password(self, username_or_email, password):
-        hashed_pw = hashlib.sha256(password.encode()).hexdigest()
+        username_or_email = username_or_email.strip()
 
-        # Admin login check
+        # Administrator login
         if is_admin(username_or_email, password):
             self.active_session = "Admin"
             return True
 
-        # Normal user login
+        hashed_pw = hashlib.sha256(password.encode()).hexdigest()
+
+        # Match either email or identifier
         for uid, info in self.users.items():
-            if username_or_email in (uid, info.get("email")):
+            if username_or_email == uid or username_or_email == info.get("email"):
                 if info.get("password") == hashed_pw:
                     self.active_session = uid
                     return True
+                return False
 
         return False
 
@@ -87,62 +92,61 @@ class AuthSystem:
     def login_facial(self, threshold=70.0):
         user_id, conf = facial.predict_face(threshold)
 
-        if user_id:
-            self.active_session = user_id
-            return user_id, f"Facial login successful. Confidence {conf:.2f}"
+        if user_id is None:
+            if conf == float("inf"):
+                return None, "Camera error or the model is not trained"
+            return None, f"Face did not match any user. Confidence {conf:.2f}"
 
-        if conf == float("inf"):
-            return None, "Recognizer not trained or no face detected"
+        user_id = str(user_id)
 
-        return None, f"No matching user found. Confidence {conf:.2f}"
+        # Ensure user exists in storage
+        if user_id not in self.users:
+            return None, f"User not recognized. Confidence {conf:.2f}"
+
+        self.active_session = user_id
+        return user_id, f"Facial login successful. Confidence {conf:.2f}"
 
     # -----------------------------------------------------------
     # FINGERPRINT LOGIN (SIMULATED)
     # -----------------------------------------------------------
     def login_fingerprint(self):
-        """
-        Looks for any stored fingerprint and matches it.
-        Simulated because no real device integration.
-        """
-        temp_capture = Path("data/biometric/temp_fp.png")
-        temp_capture.parent.mkdir(parents=True, exist_ok=True)
-        temp_capture.touch(exist_ok=True)
+        temp_fp = Path("data/biometric/temp_fp.png")
+        temp_fp.parent.mkdir(parents=True, exist_ok=True)
+        temp_fp.touch(exist_ok=True)
 
+        # Simulated match
         for uid, info in self.users.items():
-            stored = info.get("fingerprint_path")
-            if stored and Path(stored).exists():
+            fp = info.get("fingerprint_path")
+            if fp and Path(fp).exists():
                 self.active_session = uid
-                temp_capture.unlink(missing_ok=True)
-                return uid, "Fingerprint login successful (simulated)"
+                temp_fp.unlink(missing_ok=True)
+                return uid, "Fingerprint login successful"
 
-        temp_capture.unlink(missing_ok=True)
+        temp_fp.unlink(missing_ok=True)
         return None, "Fingerprint not recognized"
 
     # -----------------------------------------------------------
-    # USER PROFILE FETCH  (THIS FIXES YOUR CURRENT CRASH)
+    # FETCH USER PROFILE
     # -----------------------------------------------------------
     def get_user_profile(self, user_id):
-        """
-        Required by main_window, login_page, dashboard.
-        """
-        return self.users.get(user_id)
+        return self.users.get(str(user_id))
 
     # -----------------------------------------------------------
-    # ADMIN UPLOAD EHR
+    # ADMIN UPLOAD
     # -----------------------------------------------------------
     def admin_upload_ehr(self, target_user_id, file_path):
         if self.active_session != "Admin":
-            raise PermissionError("Only Admin can upload EHR files")
+            raise PermissionError("Only the administrator can upload EHR files")
         return save_ehr_for_user(target_user_id, file_path)
 
     # -----------------------------------------------------------
-    # USER EHR
+    # FETCH USER EHR
     # -----------------------------------------------------------
     def get_user_ehr_files(self, user_id):
         return load_user_ehr(user_id)
 
     # -----------------------------------------------------------
-    # GET ALL USERS
+    # LIST ALL USERS (ADMIN)
     # -----------------------------------------------------------
     def get_all_users(self):
         return self.users

@@ -85,6 +85,17 @@ class DashboardPage(ctk.CTkFrame):
         self.logout_btn = ctk.CTkButton(footer, text="Logout", fg_color="#ff5c5c",
                                         hover_color="#ff1f1f", width=120, command=self.logout)
         self.logout_btn.pack(side="right")
+        
+    def set_welcome_message(self, name: str):
+        """
+        Updates the welcome label at the top of the dashboard.
+        Called by MainApp after login.
+        """
+        try:
+            self.info_label.configure(text=f"Welcome, {name}")
+        except Exception:
+            pass
+
 
     # --------------------- Admin Methods ---------------------
     def enable_admin_mode(self):
